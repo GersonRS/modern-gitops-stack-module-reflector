@@ -2,6 +2,24 @@
 ## Standard variables
 #######################
 
+variable "project_source_repo" {
+  description = "Repository allowed to be scraped in this AppProject."
+  type        = string
+  default     = "https://github.com/GersonRS/modern-gitops-stack-module-reflector.git"
+}
+
+variable "namespace" {
+  description = "Namespace where the applications's Kubernetes resources should be created. Namespace will be created in case it doesn't exist."
+  type        = string
+  default     = "database"
+}
+
+variable "argocd_namespace" {
+  description = "Namespace used by Argo CD where the Application and AppProject resources should be created."
+  type        = string
+  default     = "argocd"
+}
+
 variable "cluster_name" {
   description = "Name given to the cluster. Value used for naming some the resources created by the module."
   type        = string
@@ -10,6 +28,13 @@ variable "cluster_name" {
 variable "base_domain" {
   description = "Base domain of the cluster. Value used for the ingress' URL of the application."
   type        = string
+}
+
+variable "subdomain" {
+  description = "Subdomain of the cluster. Value used for the ingress' URL of the application."
+  type        = string
+  default     = "apps"
+  nullable    = false
 }
 
 variable "argocd_project" {
@@ -33,13 +58,19 @@ variable "destination_cluster" {
 variable "target_revision" {
   description = "Override of target revision of the application chart."
   type        = string
-  default     = "v1.0.0" # x-release-please-version
+  default     = "v2.7.0" # x-release-please-version
 }
 
 variable "cluster_issuer" {
   description = "SSL certificate issuer to use. Usually you would configure this value as `letsencrypt-staging` or `letsencrypt-prod` on your root `*.tf` files."
   type        = string
   default     = "selfsigned-issuer"
+}
+
+variable "enable_service_monitor" {
+  description = "Enable Prometheus ServiceMonitor in the Helm chart."
+  type        = bool
+  default     = true
 }
 
 variable "helm_values" {
@@ -68,6 +99,54 @@ variable "dependency_ids" {
   default     = {}
 }
 
+
+variable "replicas" {
+  description = "Number of replicas for module"
+  type        = number
+  default     = 1
+}
+
+variable "resources" {
+  description = <<-EOT
+    Resource limits and requests for module components. Follow the style on https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/[official documentation] to understand the format of the values.
+
+    IMPORTANT: These are not production values. You should always adjust them to your needs.
+  EOT
+  type = object({
+    requests = optional(object({
+      cpu    = optional(string, "100m")
+      memory = optional(string, "256Mi")
+    }), {})
+    limits = optional(object({
+      cpu    = optional(string, "1000m")
+      memory = optional(string, "512Mi")
+    }), {})
+  })
+  default = {}
+}
+
 #######################
 ## Module variables
 #######################
+
+variable "databases" {
+  description = "List databases aditional"
+  type        = list(string)
+  default     = []
+}
+variable "persistence_size" {
+  description = "Size of the persistent volume claim"
+  type        = number
+  default     = 10
+}
+variable "debug" {
+  description = "Enable debug mode"
+  type        = bool
+  default     = false
+}
+
+variable "reflection_namespaces" {
+  description = "Namespaces where the replication secrets should be reflected."
+  type        = list(string)
+  default     = []
+}

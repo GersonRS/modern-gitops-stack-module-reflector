@@ -1,6 +1,6 @@
 ---
-name: "template"
-title: "Template Module"
+name: "minio"
+title: "MinIO Module"
 version: true
 start_page: README.adoc
 nav:

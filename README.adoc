@@ -1,66 +1,15 @@
-= devops-stack-module-template
-// Document attributes to replace along the document
-// Here you can define variables for something that keeps repeating along the text
-:CHART-DEPENDENCY-1-NAME-chart-version: 1.2.3
-:CHART-DEPENDENCY-2-NAME-chart-version: 1.2.3
-:original-repo-url: https://github.com/path/to/some/repository
-
-A https://devops-stack.io[DevOps Stack] module to deploy *_something_*.
-
-The *_something_* chart used by this module is shipped in this repository as well, in order to avoid any unwanted behaviors caused by unsupported versions. 
-
-[cols="1,1,1",options="autowidth,header"]
-|===
-|Current Chart Version |Original Repository |Default Values
-|*{CHART-DEPENDENCY-1-NAME-chart-version}* |{original-repo-url}/subpath/to/the/chart[Chart] |{original-repo-url}/subpath/to/the/values.yaml[`values.yaml`] (_here you can also use artifacthub.io_)
-|===
-
-== Usage
-
-_Here you will show examples of how to call this module on your code. Note that the `depends_on` needs to be adapted to your use case._
-
-_You can start by giving a simple example and then show some others with increasing complexity and/or for specific use cases._
-
-[source,terraform]
-----
-module "template" {
-  source = "git::https://github.com/camptocamp/devops-stack-module-template.git?ref=<RELEASE>"
-
-  cluster_name            = local.cluster_name
-  argocd_namespace        = local.argocd_namespace
-
-  dependency_ids = {
-    argocd = module.argocd_bootstrap.id
-  }
-}
-----
-
-=== Something Explained Better
-
-_If there is some part of the module's configuration that needs more specific explanations, such as a very particular output on which every other module depends on, maybe consider creating a subsection to improve readability._
-
-NOTE: _The AsciiDoc syntax provides a way to write admonitions such as this one, so use it if you think it is useful. The https://docs.antora.org/antora/latest/asciidoc/admonitions/[official documentation] for Antora Docs provides more examples._
-
-== Technical Reference
-
-_This section will contain the more technical details of the module. It is mainly generated automatically by Terraform Docs (everything that is between the comments `BEGIN_TF_DOCS` / `END_TF_DOCS`). However, it is recommended to, at the bare minimum, add a dependencies section to explain the reason on why this module could depend on another one from the DevOps Stack._
-
-_You can safely delete the content between the comments `BEGIN_TF_DOCS` / `END_TF_DOCS` and `BEGIN_TF_TABLES` / `END_TF_TABLES` when creating your on module._
-
-=== Dependencies
-
-==== `module.argocd_bootstrap`
-
-This module must be one of the first ones to be deployed and consequently it needs to be deployed after the module `argocd_bootstrap`.
+= modern-gitops-stack-module-replector
 
 // BEGIN_TF_DOCS
 === Requirements
 
 The following requirements are needed by this module:
 
-- [[requirement_argocd]] <<requirement_argocd,argocd>> (>= 5)
+- [[requirement_argocd]] <<requirement_argocd,argocd>> (>= 6)
 
 - [[requirement_null]] <<requirement_null,null>> (>= 3)
+
+- [[requirement_random]] <<requirement_random,random>> (>= 3)
 
 - [[requirement_utils]] <<requirement_utils,utils>> (>= 1)
 
@@ -68,20 +17,28 @@ The following requirements are needed by this module:
 
 The following providers are used by this module:
 
-- [[provider_null]] <<provider_null,null>> (>= 3)
+- [[provider_kubernetes]] <<provider_kubernetes,kubernetes>>
+
+- [[provider_random]] <<provider_random,random>> (>= 3)
+
+- [[provider_argocd]] <<provider_argocd,argocd>> (>= 6)
 
 - [[provider_utils]] <<provider_utils,utils>> (>= 1)
 
-- [[provider_argocd]] <<provider_argocd,argocd>> (>= 5)
+- [[provider_null]] <<provider_null,null>> (>= 3)
 
 === Resources
 
 The following resources are used by this module:
 
-- https://registry.terraform.io/providers/oboukili/argocd/latest/docs/resources/application[argocd_application.this] (resource)
-- https://registry.terraform.io/providers/oboukili/argocd/latest/docs/resources/project[argocd_project.this] (resource)
+- https://registry.terraform.io/providers/argoproj-labs/argocd/latest/docs/resources/application[argocd_application.this] (resource)
+- https://registry.terraform.io/providers/argoproj-labs/argocd/latest/docs/resources/project[argocd_project.this] (resource)
+- https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace[kubernetes_namespace.postgresql_namespace] (resource)
+- https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret[kubernetes_secret.postgresql_secret] (resource)
 - https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource[null_resource.dependencies] (resource)
 - https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource[null_resource.this] (resource)
+- https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password[random_password.password_secret] (resource)
+- https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/service[kubernetes_service.postgresql] (data source)
 - https://registry.terraform.io/providers/cloudposse/utils/latest/docs/data-sources/deep_merge_yaml[utils_deep_merge_yaml.values] (data source)
 
 === Required Inputs
@@ -103,6 +60,14 @@ Type: `string`
 === Optional Inputs
 
 The following input variables are optional (have default values):
+
+==== [[input_subdomain]] <<input_subdomain,subdomain>>
+
+Description: Subdomain of the cluster. Value used for the ingress' URL of the application.
+
+Type: `string`
+
+Default: `"apps"`
 
 ==== [[input_argocd_project]] <<input_argocd_project,argocd_project>>
 
@@ -134,7 +99,7 @@ Description: Override of target revision of the application chart.
 
 Type: `string`
 
-Default: `"v1.0.0"`
+Default: `"v2.7.0"`
 
 ==== [[input_cluster_issuer]] <<input_cluster_issuer,cluster_issuer>>
 
@@ -143,6 +108,14 @@ Description: SSL certificate issuer to use. Usually you would configure this val
 Type: `string`
 
 Default: `"selfsigned-issuer"`
+
+==== [[input_enable_service_monitor]] <<input_enable_service_monitor,enable_service_monitor>>
+
+Description: Enable Prometheus ServiceMonitor in the Helm chart.
+
+Type: `bool`
+
+Default: `true`
 
 ==== [[input_helm_values]] <<input_helm_values,helm_values>>
 
@@ -191,6 +164,22 @@ The following outputs are exported:
 ==== [[output_id]] <<output_id,id>>
 
 Description: ID to pass other modules in order to refer to this module as a dependency.
+
+==== [[output_credentials]] <<output_credentials,credentials>>
+
+Description: n/a
+
+==== [[output_cluster_dns]] <<output_cluster_dns,cluster_dns>>
+
+Description: Postgres cluster dns
+
+==== [[output_cluster_ip]] <<output_cluster_ip,cluster_ip>>
+
+Description: Postgres Cluster IPs
+
+==== [[output_external_ip]] <<output_external_ip,external_ip>>
+
+Description: Postgres External IPs
 // END_TF_DOCS
 
 === Reference in table format 
@@ -204,8 +193,9 @@ Description: ID to pass other modules in order to refer to this module as a depe
 [cols="a,a",options="header,autowidth"]
 |===
 |Name |Version
-|[[requirement_argocd]] <<requirement_argocd,argocd>> |>= 5
+|[[requirement_argocd]] <<requirement_argocd,argocd>> |>= 6
 |[[requirement_null]] <<requirement_null,null>> |>= 3
+|[[requirement_random]] <<requirement_random,random>> |>= 3
 |[[requirement_utils]] <<requirement_utils,utils>> |>= 1
 |===
 
@@ -214,9 +204,11 @@ Description: ID to pass other modules in order to refer to this module as a depe
 [cols="a,a",options="header,autowidth"]
 |===
 |Name |Version
-|[[provider_null]] <<provider_null,null>> |>= 3
-|[[provider_argocd]] <<provider_argocd,argocd>> |>= 5
+|[[provider_kubernetes]] <<provider_kubernetes,kubernetes>> |n/a
+|[[provider_random]] <<provider_random,random>> |>= 3
 |[[provider_utils]] <<provider_utils,utils>> |>= 1
+|[[provider_argocd]] <<provider_argocd,argocd>> |>= 6
+|[[provider_null]] <<provider_null,null>> |>= 3
 |===
 
 = Resources
@@ -224,10 +216,14 @@ Description: ID to pass other modules in order to refer to this module as a depe
 [cols="a,a",options="header,autowidth"]
 |===
 |Name |Type
-|https://registry.terraform.io/providers/oboukili/argocd/latest/docs/resources/application[argocd_application.this] |resource
-|https://registry.terraform.io/providers/oboukili/argocd/latest/docs/resources/project[argocd_project.this] |resource
+|https://registry.terraform.io/providers/argoproj-labs/argocd/latest/docs/resources/application[argocd_application.this] |resource
+|https://registry.terraform.io/providers/argoproj-labs/argocd/latest/docs/resources/project[argocd_project.this] |resource
+|https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace[kubernetes_namespace.postgresql_namespace] |resource
+|https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret[kubernetes_secret.postgresql_secret] |resource
 |https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource[null_resource.dependencies] |resource
 |https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource[null_resource.this] |resource
+|https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password[random_password.password_secret] |resource
+|https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/service[kubernetes_service.postgresql] |data source
 |https://registry.terraform.io/providers/cloudposse/utils/latest/docs/data-sources/deep_merge_yaml[utils_deep_merge_yaml.values] |data source
 |===
 
@@ -247,6 +243,12 @@ Description: ID to pass other modules in order to refer to this module as a depe
 |`string`
 |n/a
 |yes
+
+|[[input_subdomain]] <<input_subdomain,subdomain>>
+|Subdomain of the cluster. Value used for the ingress' URL of the application.
+|`string`
+|`"apps"`
+|no
 
 |[[input_argocd_project]] <<input_argocd_project,argocd_project>>
 |Name of the Argo CD AppProject where the Application should be created. If not set, the Application will be created in a new AppProject only for this Application.
@@ -269,13 +271,19 @@ Description: ID to pass other modules in order to refer to this module as a depe
 |[[input_target_revision]] <<input_target_revision,target_revision>>
 |Override of target revision of the application chart.
 |`string`
-|`"v1.0.0"`
+|`"v2.7.0"`
 |no
 
 |[[input_cluster_issuer]] <<input_cluster_issuer,cluster_issuer>>
 |SSL certificate issuer to use. Usually you would configure this value as `letsencrypt-staging` or `letsencrypt-prod` on your root `*.tf` files.
 |`string`
 |`"selfsigned-issuer"`
+|no
+
+|[[input_enable_service_monitor]] <<input_enable_service_monitor,enable_service_monitor>>
+|Enable Prometheus ServiceMonitor in the Helm chart.
+|`bool`
+|`true`
 |no
 
 |[[input_helm_values]] <<input_helm_values,helm_values>>
@@ -324,6 +332,10 @@ object({
 |===
 |Name |Description
 |[[output_id]] <<output_id,id>> |ID to pass other modules in order to refer to this module as a dependency.
+|[[output_credentials]] <<output_credentials,credentials>> |n/a
+|[[output_cluster_dns]] <<output_cluster_dns,cluster_dns>> |Postgres cluster dns
+|[[output_cluster_ip]] <<output_cluster_ip,cluster_ip>> |Postgres Cluster IPs
+|[[output_external_ip]] <<output_external_ip,external_ip>> |Postgres External IPs
 |===
 // END_TF_TABLES
 ====

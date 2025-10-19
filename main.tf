@@ -6,17 +6,20 @@ resource "argocd_project" "this" {
   count = var.argocd_project == null ? 1 : 0
 
   metadata {
-    name      = var.destination_cluster != "in-cluster" ? "<CHART_NAME>-${var.destination_cluster}" : "<CHART_NAME>"
-    namespace = "argocd"
+    name      = var.destination_cluster != "in-cluster" ? "reflector-${var.destination_cluster}" : "reflector"
+    namespace = var.argocd_namespace
+    annotations = {
+      "modern-gitops-stack.io/argocd_namespace" = var.argocd_namespace
+    }
   }
 
   spec {
-    description  = "<CHART_NAME> application project for cluster ${var.destination_cluster}"
-    source_repos = ["https://github.com/camptocamp/devops-stack-module-<CHART_NAME>.git"]
+    description  = "reflector application project for cluster ${var.destination_cluster}"
+    source_repos = [var.project_source_repo]
 
     destination {
       name      = var.destination_cluster
-      namespace = "<CHART_NAME>"
+      namespace = var.namespace
     }
 
     orphaned_resources {
@@ -36,17 +39,17 @@ data "utils_deep_merge_yaml" "values" {
 
 resource "argocd_application" "this" {
   metadata {
-    name      = var.destination_cluster != "in-cluster" ? "<CHART_NAME>-${var.destination_cluster}" : "<CHART_NAME>"
-    namespace = "argocd"
+    name      = var.destination_cluster != "in-cluster" ? "reflector-${var.destination_cluster}" : "reflector"
+    namespace = var.argocd_namespace
     labels = merge({
-      "application" = "<CHART_NAME>"
+      "application" = "reflector"
       "cluster"     = var.destination_cluster
     }, var.argocd_labels)
   }
 
   timeouts {
-    create = "15m"
-    delete = "15m"
+    create = "5m"
+    delete = "5m"
   }
 
   wait = var.app_autosync == { "allow_empty" = tobool(null), "prune" = tobool(null), "self_heal" = tobool(null) } ? false : true
@@ -55,18 +58,18 @@ resource "argocd_application" "this" {
     project = var.argocd_project == null ? argocd_project.this[0].metadata.0.name : var.argocd_project
 
     source {
-      repo_url        = "https://github.com/camptocamp/devops-stack-module-<CHART_NAME>.git"
-      path            = "charts/<CHART_NAME>"
+      repo_url        = var.project_source_repo
+      path            = "charts/reflector"
       target_revision = var.target_revision
       helm {
-        release_name = "<CHART_NAME>"
+        release_name = "reflector"
         values       = data.utils_deep_merge_yaml.values.output
       }
     }
 
     destination {
       name      = var.destination_cluster
-      namespace = "<CHART_NAME>"
+      namespace = var.namespace
     }
 
     sync_policy {
