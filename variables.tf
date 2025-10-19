@@ -11,7 +11,7 @@ variable "project_source_repo" {
 variable "namespace" {
   description = "Namespace where the applications's Kubernetes resources should be created. Namespace will be created in case it doesn't exist."
   type        = string
-  default     = "database"
+  default     = "management"
 }
 
 variable "argocd_namespace" {
@@ -58,7 +58,7 @@ variable "destination_cluster" {
 variable "target_revision" {
   description = "Override of target revision of the application chart."
   type        = string
-  default     = "v2.7.0" # x-release-please-version
+  default     = "v1.0.0" # x-release-please-version
 }
 
 variable "cluster_issuer" {
@@ -123,30 +123,4 @@ variable "resources" {
     }), {})
   })
   default = {}
-}
-
-#######################
-## Module variables
-#######################
-
-variable "databases" {
-  description = "List databases aditional"
-  type        = list(string)
-  default     = []
-}
-variable "persistence_size" {
-  description = "Size of the persistent volume claim"
-  type        = number
-  default     = 10
-}
-variable "debug" {
-  description = "Enable debug mode"
-  type        = bool
-  default     = false
-}
-
-variable "reflection_namespaces" {
-  description = "Namespaces where the replication secrets should be reflected."
-  type        = list(string)
-  default     = []
 }
