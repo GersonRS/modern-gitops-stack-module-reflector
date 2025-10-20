@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/GersonRS/modern-gitops-stack-module-reflector/compare/v1.1.0...v1.2.0) (2025-10-20)
+
+
+### 🚀 New Features
+
+* update Reflector module with documentation and GitHub Copilot instructions ([62591d7](https://github.com/GersonRS/modern-gitops-stack-module-reflector/commit/62591d70729153c730add402bb532af6e7789ab6))
+
+
+### 📚 Documentation
+
+* update Antora documentation configuration ([330c89e](https://github.com/GersonRS/modern-gitops-stack-module-reflector/commit/330c89e40902672acbc4d40a1102a43e6c9780a3))
+
 ## [1.1.0](https://github.com/GersonRS/modern-gitops-stack-module-reflector/compare/v1.0.0...v1.1.0) (2025-10-20)
 
 
